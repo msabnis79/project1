@@ -1,0 +1,65 @@
+from sentence_transformers import SentenceTransformer, util
+import pandas as pd
+
+# ------------------
+# Load Model
+# ------------------
+model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+
+# Example vendor data
+ 
+
+AA = pd.read_csv("C:/Mihir/00-Project/BB_Equity_10fields_comp.csv") 
+BB = pd.read_csv("C:/Mihir/00-Project/ICE_Equity_10fields_comp.csv") 
+
+print (AA)
+print(BB)
+
+ 
+# ------------------
+# Compute embeddings
+# ------------------
+def embed_column(df):
+    texts = (df["FIELD_NAME"] + " " + df["FIELD_DESCRIPTION"]).tolist()
+    print(texts)
+    return model.encode(texts, convert_to_tensor=True)
+
+A_vecs = embed_column(AA)
+B_vecs = embed_column(BB)
+
+# ------------------
+# Compute similarity matrix
+# ------------------
+similarity_matrix = util.cos_sim(A_vecs, B_vecs)  # shape: [len(AA), len(BB)]
+
+# Convert to dataframe for readability
+sim_df = pd.DataFrame(similarity_matrix.cpu().numpy(), 
+                      index=AA.index, 
+                      columns=BB.index)
+
+print("Similarity Scores:")
+print(sim_df)
+
+threshold = 0.70
+print("\n\n==== High Confidence Matches (Similarity > 0.70) ====\n")
+results = []
+for i in AA.index:
+    for j in BB.index:
+        score = sim_df.loc[i, j]
+        if score >= threshold:
+            print(f"AA Field: {AA.loc[i, 'FIELD_NAME']}")
+            print(f"AA Description: {AA.loc[i, 'FIELD_DESCRIPTION']}")
+            print(f"BB Field: {BB.loc[j, 'FIELD_NAME']}")
+            print(f"BB Description: {BB.loc[j, 'FIELD_DESCRIPTION']}")
+            print(f"Similarity: {score:.4f}")
+            print("-" * 60)
+            results.append({
+                "AA_name": AA.loc[i, "FIELD_NAME"],
+                "AA_description": AA.loc[i, "FIELD_DESCRIPTION"],
+                "BB_name": BB.loc[j, "FIELD_NAME"],
+                "BB_description": BB.loc[j, "FIELD_DESCRIPTION"],
+                "similarity_score": round(score, 4)
+            })
+results_df = pd.DataFrame(results)
+results_df.to_csv("C:/Mihir/00-Project/field_similarity_results.csv", index=False)
+print("\nCSV written: field_similarity_results.csv")

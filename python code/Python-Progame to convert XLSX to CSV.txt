@@ -1,0 +1,18 @@
+import random
+import pandas as pd
+
+df = pd.read_csv("C:/Mihir/99-Certifications/Snowflake AIML/FILES/housing.csv",
+    skiprows=lambda i: i > 0 and random.random() > 0.10)
+def xlsx_to_pipe_csv(input_file, output_file):
+    # Read the Excel file
+    df = pd.read_excel(input_file)
+
+    # Write to CSV with pipe delimiter
+    df.to_csv(output_file, sep='|', index=False)
+
+    print(f"Converted: {input_file} → {output_file}")
+
+# Example usage
+xlsx_to_pipe_csv("C:/Mihir/0-GoldenSourceBackup-2025/100-Knowledge/ICE/ICE_2024.xlsx", "C:/Mihir/0-GoldenSourceBackup-2025/100-Knowledge/ICE/ICE_2024_1.csv")
+
+ 
